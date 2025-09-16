@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - QuizGen{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="text-white mb-4">
+            <i class="fas fa-tachometer-alt me-2"></i>
+            Welcome back, {{ user.first_name|default:user.username }}!
+        </h1>
+    </div>
+</div>
+
+<!-- Quick Stats -->
+<div class="row mb-5">
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-play-circle fa-3x text-primary mb-3"></i>
+                <h4>{{ quiz_attempts }}</h4>
+                <p class="text-muted">Quiz Attempts</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-trophy fa-3x text-success mb-3"></i>
+                <h4>{{ passed_quizzes }}</h4>
+                <p class="text-muted">Passed Quizzes</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-percentage fa-3x text-info mb-3"></i>
+                <h4>{{ average_score|floatformat:1 }}%</h4>
+                <p class="text-muted">Average Score</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-fire fa-3x text-warning mb-3"></i>
+                <h4>{{ streak_days }}</h4>
+                <p class="text-muted">Day Streak</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Categories Section -->
+<div class="row mb-5">
+    <div class="col-12">
+        <h3 class="text-white mb-4"><i class="fas fa-tags me-2"></i>Browse by Category</h3>
+    </div>
+    {% for category in categories %}
+    <div class="col-lg-4 col-md-6 mb-4">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="me-3">
+                        {% if 'programming' in category.name.lower %}
+                            <i class="fas fa-code fa-2x text-primary"></i>
+                        {% elif 'math' in category.name.lower %}
+                            <i class="fas fa-calculator fa-2x text-success"></i>
+                        {% elif 'physics' in category.name.lower %}
+                            <i class="fas fa-atom fa-2x text-info"></i>
+                        {% elif 'chemistry' in category.name.lower %}
+                            <i class="fas fa-flask fa-2x text-warning"></i>
+                        {% elif 'history' in category.name.lower %}
+                            <i class="fas fa-landmark fa-2x text-danger"></i>
+                        {% elif 'geography' in category.name.lower %}
+                            <i class="fas fa-globe fa-2x text-success"></i>
+                        {% else %}
+                            <i class="fas fa-graduation-cap fa-2x text-primary"></i>
+                        {% endif %}
+                    </div>
+                    <div class="flex-grow-1">
+                        <h5 class="mb-1">{{ category.name }}</h5>
+                        <p class="text-muted mb-0 small">{{ category.quizzes.count }} quizzes available</p>
+                    </div>
+                </div>
+                
+                {% if category.subcategories.exists %}
+                <div class="mb-3">
+                    <small class="text-muted">Subcategories:</small>
+                    <div class="mt-1">
+                        {% for subcategory in category.subcategories.all|slice:":3" %}
+                            <span class="badge bg-secondary me-1">{{ subcategory.name }}</span>
+                        {% endfor %}
+                        {% if category.subcategories.count > 3 %}
+                            <span class="badge bg-light text-dark">+{{ category.subcategories.count|add:"-3" }} more</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <a href="{% url 'category_detail' category.id %}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-arrow-right me-1"></i>Explore
+                </a>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
+                <p class="text-muted">No categories available yet.</p>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Recent Quiz History -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-history me-2"></i>Recent Quiz History</h5>
+                <a href="{% url 'quiz_history' %}" class="btn btn-outline-primary btn-sm">View All</a>
+            </div>
+            <div class="card-body">
+                {% if recent_history %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Quiz</th>
+                                <th>Category</th>
+                                <th>Score</th>
+                                <th>Result</th>
+                                <th>Date</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for history in recent_history %}
+                            <tr>
+                                <td>
+                                    <strong>{{ history.quiz.title }}</strong>
+                                    <br>
+                                    <small class="text-muted">{{ history.quiz.difficulty|capfirst }} level</small>
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary">{{ history.quiz.category.name }}</span>
+                                </td>
+                                <td>
+                                    <strong>{{ history.score }}/{{ history.total_marks }}</strong>
+                                    <br>
+                                    <small class="text-muted">{{ history.percentage|floatformat:1 }}%</small>
+                                </td>
+                                <td>
+                                    {% if history.passed %}
+                                        <span class="badge bg-success">Passed</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Failed</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <small>{{ history.completed_at|date:"M d, Y" }}</small>
+                                    <br>
+                                    <small class="text-muted">{{ history.completed_at|time:"g:i A" }}</small>
+                                </td>
+                                <td>
+                                    <a href="{% url 'quiz_result' history.id %}" class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-eye me-1"></i>View
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">No quiz attempts yet. Start your learning journey!</p>
+                    <a href="{% url 'quiz_list' %}" class="btn btn-primary">Take Your First Quiz</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

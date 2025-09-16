@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+
+{% block title %}Quiz History - QuizGen{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="text-white mb-4"><i class="fas fa-history me-2"></i>Your Quiz History</h1>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-play-circle fa-2x text-primary mb-2"></i>
+                <h4>{{ total_attempts }}</h4>
+                <p class="text-muted mb-0">Total Attempts</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-trophy fa-2x text-success mb-2"></i>
+                <h4>{{ passed_attempts }}</h4>
+                <p class="text-muted mb-0">Passed</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-percentage fa-2x text-info mb-2"></i>
+                <h4>{{ average_score|floatformat:1 }}%</h4>
+                <p class="text-muted mb-0">Average Score</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-medal fa-2x text-warning mb-2"></i>
+                <h4>{{ best_score|floatformat:1 }}%</h4>
+                <p class="text-muted mb-0">Best Score</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quiz History Table -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">All Quiz Attempts</h5>
+            </div>
+            <div class="card-body">
+                {% if quiz_history %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Quiz</th>
+                                <th>Category</th>
+                                <th>Difficulty</th>
+                                <th>Score</th>
+                                <th>Percentage</th>
+                                <th>Result</th>
+                                <th>Time Taken</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for history in quiz_history %}
+                            <tr>
+                                <td>
+                                    <strong>{{ history.quiz.title|truncatechars:30 }}</strong>
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary">{{ history.quiz.category.name }}</span>
+                                </td>
+                                <td>
+                                    <span class="quiz-difficulty difficulty-{{ history.quiz.difficulty }}">
+                                        {{ history.quiz.get_difficulty_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <strong>{{ history.score }}/{{ history.total_marks }}</strong>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="progress me-2" style="width: 60px; height: 8px;">
+                                            <div class="progress-bar {% if history.passed %}bg-success{% else %}bg-danger{% endif %}" 
+                                                 style="width: {{ history.percentage }}%"></div>
+                                        </div>
+                                        <span class="small">{{ history.percentage|floatformat:1 }}%</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if history.passed %}
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-check me-1"></i>Passed
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-danger">
+                                            <i class="fas fa-times me-1"></i>Failed
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <small>{{ history.time_taken }} min</small>
+                                </td>
+                                <td>
+                                    <small>{{ history.completed_at|date:"M d, Y" }}</small>
+                                    <br>
+                                    <small class="text-muted">{{ history.completed_at|time:"g:i A" }}</small>
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="{% url 'quiz_result' history.id %}" class="btn btn-outline-primary btn-sm" 
+                                           title="View Results">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{% url 'quiz_detail' history.quiz.id %}" class="btn btn-outline-secondary btn-sm" 
+                                           title="Retake Quiz">
+                                            <i class="fas fa-redo"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                {% if quiz_history.has_other_pages %}
+                <nav aria-label="Quiz history pagination" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        {% if quiz_history.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1">
+                                    <i class="fas fa-angle-double-left"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ quiz_history.previous_page_number }}">
+                                    <i class="fas fa-angle-left"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                        
+                        {% for num in quiz_history.paginator.page_range %}
+                            {% if quiz_history.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                            {% elif num > quiz_history.number|add:'-3' and num < quiz_history.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if quiz_history.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ quiz_history.next_page_number }}">
+                                    <i class="fas fa-angle-right"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ quiz_history.paginator.num_pages }}">
+                                    <i class="fas fa-angle-double-right"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+                
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-clipboard-list fa-4x text-muted mb-3"></i>
+                    <h4>No Quiz History</h4>
+                    <p class="text-muted">You haven't taken any quizzes yet. Start your learning journey now!</p>
+                    <a href="{% url 'quiz_list' %}" class="btn btn-primary">
+                        <i class="fas fa-play me-1"></i>Take Your First Quiz
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

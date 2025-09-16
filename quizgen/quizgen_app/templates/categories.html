@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+
+{% block title %}Choose Category - Quiz Platform{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="text-center mb-2">Choose Your Quiz Category</h1>
+            <p class="text-center text-muted mb-5">Select a category and subcategory to generate your personalized AI quiz</p>
+        </div>
+    </div>
+
+    <div class="row">
+        {% for category in categories %}
+            <div class="col-md-6 mb-4">
+                <div class="card h-100 category-card">
+                    <div class="card-body text-center text-white">
+                        <div class="mb-3">
+                            {% if category.name == 'DSA' %}
+                                <i class="fas fa-code fa-4x"></i>
+                            {% elif category.name == 'Programming Language' %}
+                                <i class="fas fa-laptop-code fa-4x"></i>
+                            {% elif category.name == 'Mathematics' %}
+                                <i class="fas fa-calculator fa-4x"></i>
+                            {% elif category.name == 'Physics' %}
+                                <i class="fas fa-atom fa-4x"></i>
+                            {% else %}
+                                <i class="fas fa-book fa-4x"></i>
+                            {% endif %}
+                        </div>
+                        <h3 class="card-title">{{ category.name }}</h3>
+                        <p class="card-text mb-4">{{ category.description|default:"Test your knowledge in this exciting category" }}</p>
+                        
+                        <!-- Subcategories -->
+                        {% if category.subcategories.exists %}
+                            <div class="mb-3">
+                                <h6>Available Topics:</h6>
+                                <div class="d-flex flex-wrap justify-content-center">
+                                    {% for subcategory in category.subcategories.all %}
+                                        <span class="badge bg-light text-dark me-1 mb-1">{{ subcategory.name }}</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endif %}
+                        
+                        <a href="{% url 'generate_quiz' %}?category={{ category.id }}" class="btn btn-light btn-lg">
+                            <i class="fas fa-magic"></i> Generate AI Quiz
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-12 text-center">
+                <div class="py-5">
+                    <i class="fas fa-folder-open fa-4x text-muted mb-3"></i>
+                    <h3 class="text-muted">No Categories Available</h3>
+                    <p class="text-muted">Please contact an administrator to add quiz categories.</p>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Instructions -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <h5><i class="fas fa-info-circle text-primary"></i> How it works</h5>
+                    <div class="row">
+                        <div class="col-md-3 text-center mb-3">
+                            <i class="fas fa-mouse-pointer fa-2x text-primary mb-2"></i>
+                            <h6>1. Select Category</h6>
+                            <p class="small text-muted">Choose your preferred subject area</p>
+                        </div>
+                        <div class="col-md-3 text-center mb-3">
+                            <i class="fas fa-cog fa-2x text-success mb-2"></i>
+                            <h6>2. Customize Quiz</h6>
+                            <p class="small text-muted">Set difficulty, time limit, and number of questions</p>
+                        </div>
+                        <div class="col-md-3 text-center mb-3">
+                            <i class="fas fa-brain fa-2x text-warning mb-2"></i>
+                            <h6>3. AI Generation</h6>
+                            <p class="small text-muted">Our AI creates unique questions for you</p>
+                        </div>
+                        <div class="col-md-3 text-center mb-3">
+                            <i class="fas fa-play fa-2x text-danger mb-2"></i>
+                            <h6>4. Take Quiz</h6>
+                            <p class="small text-muted">Answer questions and get instant results</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

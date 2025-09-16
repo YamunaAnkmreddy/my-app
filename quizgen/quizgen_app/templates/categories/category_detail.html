@@ -1,0 +1,433 @@
+{% extends "base.html" %}
+
+{% block title %}{{ category.name }} - QuizGen{% endblock %}
+
+{% block extra_css %}
+<style>
+    .category-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 40px 0;
+        border-radius: 15px;
+        margin-bottom: 30px;
+    }
+    
+    .subcategory-card {
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 15px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .subcategory-card:hover {
+        border-color: #007bff;
+        box-shadow: 0 5px 15px rgba(0,123,255,0.2);
+        transform: translateY(-2px);
+    }
+    
+    .subcategory-card.selected {
+        border-color: #007bff;
+        background-color: #e7f3ff;
+    }
+    
+    .quiz-settings-card {
+        position: sticky;
+        top: 100px;
+    }
+    
+    .generate-btn {
+        background: linear-gradient(45deg, #007bff, #6f42c1);
+        border: none;
+        border-radius: 25px;
+        padding: 12px 30px;
+        font-weight: bold;
+        transition: all 0.3s ease;
+    }
+    
+    .generate-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,123,255,0.3);
+    }
+    
+    .quiz-card-small .card-body {
+        padding: 15px;
+    }
+
+    .quiz-card-small .card-title {
+        font-size: 0.95rem;
+        margin-bottom: 8px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Category Header -->
+    <div class="category-header text-center">
+        <div class="container">
+            <div class="mb-3">
+                {% if 'programming' in category.name.lower %}
+                    <i class="fas fa-code fa-5x"></i>
+                {% elif 'math' in category.name.lower %}
+                    <i class="fas fa-calculator fa-5x"></i>
+                {% elif 'physics' in category.name.lower %}
+                    <i class="fas fa-atom fa-5x"></i>
+                {% elif 'chemistry' in category.name.lower %}
+                    <i class="fas fa-flask fa-5x"></i>
+                {% elif 'history' in category.name.lower %}
+                    <i class="fas fa-landmark fa-5x"></i>
+                {% elif 'geography' in category.name.lower %}
+                    <i class="fas fa-globe fa-5x"></i>
+                {% else %}
+                    <i class="fas fa-graduation-cap fa-5x"></i>
+                {% endif %}
+            </div>
+            <h1>{{ category.name }}</h1>
+            <p class="lead">{{ category.description|default:"Explore quizzes in this category" }}</p>
+            
+            <!-- Back to Dashboard Button -->
+            <a href="{% url 'dashboard' %}" class="btn btn-outline-light">
+                <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+            </a>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="row">
+            <!-- Subcategory Selection -->
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-layer-group me-2"></i>Select Subcategory
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if category.subcategories.exists %}
+                            <div id="subcategory-container">
+                                {% for subcategory in category.subcategories.all %}
+                                <div class="subcategory-card" 
+                                     data-subcategory-id="{{ subcategory.id }}"
+                                     data-subcategory-name="{{ subcategory.name }}"
+                                     onclick="selectSubcategory(this)">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-1">{{ subcategory.name }}</h6>
+                                            <p class="text-muted mb-0 small">
+                                                {{ subcategory.description|default:"No description available" }}
+                                            </p>
+                                        </div>
+                                        <div class="text-center">
+                                            <span class="badge bg-primary">{{ subcategory.quizzes.count }} quizzes</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                                
+                                <!-- Option for All Subcategories -->
+                                <div class="subcategory-card" 
+                                     data-subcategory-id="all"
+                                     data-subcategory-name="All Subcategories"
+                                     onclick="selectSubcategory(this)">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-1">All Subcategories</h6>
+                                            <p class="text-muted mb-0 small">
+                                                Include questions from all subcategories
+                                            </p>
+                                        </div>
+                                        <div class="text-center">
+                                            <span class="badge bg-success">{{ category.quizzes.count }} total quizzes</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="text-center py-4">
+                                <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
+                                <h5>No subcategories available</h5>
+                                <p class="text-muted">This category doesn't have any subcategories yet.</p>
+                                
+                                <!-- Show available quizzes directly -->
+                                {% if category.quizzes.exists %}
+                                    <p class="mb-3">But you can still take quizzes from this category:</p>
+                                    <div class="row">
+                                        {% for quiz in category.quizzes.all|slice:":6" %}
+                                        <div class="col-md-6 mb-2">
+                                            <a href="{% url 'quiz_detail' quiz.id %}" class="btn btn-outline-primary btn-sm">
+                                                {{ quiz.title|truncatechars:30 }}
+                                            </a>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Available Quizzes in Selected Subcategory -->
+                <div class="card mt-4" id="quizzes-section" style="display: none;">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-list me-2"></i>Available Quizzes
+                            <span id="selected-subcategory-name" class="text-muted"></span>
+                        </h5>
+                    </div>
+                    <div class="card-body" id="quizzes-container">
+                        <!-- Quizzes will be loaded here via JavaScript -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Quiz Settings Sidebar -->
+            <div class="col-lg-4">
+                <div class="card quiz-settings-card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-cog me-2"></i>Quiz Settings
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="quiz-generation-form">
+                            {% csrf_token %}
+                            <input type="hidden" id="selected-category" value="{{ category.id }}">
+                            <input type="hidden" id="selected-subcategory" value="">
+                            
+                            <!-- Number of Questions -->
+                            <div class="mb-3">
+                                <label class="form-label">Number of Questions</label>
+                                <select class="form-control" id="num-questions" name="num_questions">
+                                    <option value="5">5 Questions (10 min)</option>
+                                    <option value="10" selected>10 Questions (20 min)</option>
+                                    <option value="15">15 Questions (30 min)</option>
+                                    <option value="20">20 Questions (40 min)</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Difficulty Level -->
+                            <div class="mb-4">
+                                <label class="form-label">Difficulty Level</label>
+                                <select class="form-control" id="difficulty" name="difficulty">
+                                    <option value="easy">Easy</option>
+                                    <option value="medium" selected>Medium</option>
+                                    <option value="hard">Hard</option>
+                                    <option value="mixed">Mixed (All Levels)</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Generate Quiz Button -->
+                            <div class="d-grid">
+                                <button type="button" class="btn btn-primary generate-btn" 
+                                        id="generate-quiz-btn" onclick="generateQuiz()" disabled>
+                                    <i class="fas fa-magic me-2"></i>Generate Quiz
+                                </button>
+                            </div>
+                            
+                            <!-- Selected Info -->
+                            <div class="mt-3 p-3 bg-light rounded" id="selection-info" style="display: none;">
+                                <small class="text-muted">
+                                    <strong>Selected:</strong><br>
+                                    <span id="info-subcategory"></span><br>
+                                    <span id="info-questions"></span><br>
+                                    <span id="info-difficulty"></span>
+                                </small>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- Category Stats -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h6 class="mb-0">Category Statistics</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-4">
+                                <h5 class="text-primary">{{ category.quizzes.count }}</h5>
+                                <small class="text-muted">Total Quizzes</small>
+                            </div>
+                            <div class="col-4">
+                                <h5 class="text-info">{{ category.subcategories.count }}</h5>
+                                <small class="text-muted">Subcategories</small>
+                            </div>
+                            <div class="col-4">
+                                <h5 class="text-success">{{ category.questions_count|default:0 }}</h5>
+                                <small class="text-muted">Questions</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let selectedSubcategoryId = null;
+let selectedSubcategoryName = null;
+
+function selectSubcategory(element) {
+    // Remove previous selection
+    document.querySelectorAll('.subcategory-card').forEach(card => {
+        card.classList.remove('selected');
+    });
+    
+    // Add selection to clicked element
+    element.classList.add('selected');
+    
+    // Get subcategory info
+    selectedSubcategoryId = element.dataset.subcategoryId;
+    selectedSubcategoryName = element.dataset.subcategoryName;
+    
+    // Update hidden field
+    document.getElementById('selected-subcategory').value = selectedSubcategoryId;
+    
+    // Enable generate button
+    document.getElementById('generate-quiz-btn').disabled = false;
+    
+    // Update selection info
+    updateSelectionInfo();
+    
+    // Load quizzes for this subcategory
+    loadSubcategoryQuizzes(selectedSubcategoryId);
+}
+
+function updateSelectionInfo() {
+    const infoDiv = document.getElementById('selection-info');
+    const numQuestions = document.getElementById('num-questions').value;
+    const difficulty = document.getElementById('difficulty').value;
+    
+    document.getElementById('info-subcategory').textContent = selectedSubcategoryName;
+    document.getElementById('info-questions').textContent = `${numQuestions} questions`;
+    document.getElementById('info-difficulty').textContent = `${difficulty} difficulty`;
+    
+    infoDiv.style.display = 'block';
+}
+
+function loadSubcategoryQuizzes(subcategoryId) {
+    const categoryId = document.getElementById('selected-category').value;
+    const quizzesSection = document.getElementById('quizzes-section');
+    const quizzesContainer = document.getElementById('quizzes-container');
+    const subcategoryNameSpan = document.getElementById('selected-subcategory-name');
+    
+    // Show loading
+    quizzesContainer.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin"></i> Loading quizzes...</div>';
+    quizzesSection.style.display = 'block';
+    subcategoryNameSpan.textContent = `in ${selectedSubcategoryName}`;
+    
+    // For now, show static content since we don't have the API endpoint yet
+    // You can uncomment the fetch code when the API is ready
+    
+    // Temporary static display
+    setTimeout(() => {
+        quizzesContainer.innerHTML = `
+            <div class="text-center py-4">
+                <i class="fas fa-clipboard-list fa-3x text-primary mb-3"></i>
+                <h6>Quizzes for ${selectedSubcategoryName}</h6>
+                <p class="text-muted">Quiz generation functionality will be available once you add quizzes to this subcategory.</p>
+                <a href="/admin/" class="btn btn-outline-primary btn-sm" target="_blank">
+                    <i class="fas fa-plus me-1"></i>Add Quizzes in Admin
+                </a>
+            </div>
+        `;
+    }, 1000);
+    
+    /*
+    // Uncomment this when you have the API endpoint working
+    fetch(`/api/subcategory-quizzes/${categoryId}/${subcategoryId}/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.quizzes.length > 0) {
+                let quizzesHtml = '<div class="row">';
+                data.quizzes.forEach(quiz => {
+                    quizzesHtml += `
+                        <div class="col-md-6 mb-3">
+                            <div class="card quiz-card-small">
+                                <div class="card-body">
+                                    <h6 class="card-title">${quiz.title}</h6>
+                                    <p class="card-text small text-muted">${quiz.description.substring(0, 80)}...</p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <small class="text-muted">
+                                            <span class="badge bg-${quiz.difficulty === 'easy' ? 'success' : quiz.difficulty === 'medium' ? 'warning' : 'danger'}">${quiz.difficulty}</span>
+                                        </small>
+                                        <a href="/quiz/${quiz.id}/" class="btn btn-primary btn-sm">
+                                            <i class="fas fa-play"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                quizzesHtml += '</div>';
+                quizzesContainer.innerHTML = quizzesHtml;
+            } else {
+                quizzesContainer.innerHTML = `
+                    <div class="text-center py-4">
+                        <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+                        <h6>No quizzes available</h6>
+                        <p class="text-muted">No quizzes found in this subcategory.</p>
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            quizzesContainer.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Error loading quizzes. Please try again.
+                </div>
+            `;
+        });
+    */
+}
+
+function generateQuiz() {
+    if (!selectedSubcategoryId) {
+        alert('Please select a subcategory first.');
+        return;
+    }
+    
+    const categoryId = document.getElementById('selected-category').value;
+    const numQuestions = document.getElementById('num-questions').value;
+    const difficulty = document.getElementById('difficulty').value;
+    
+    // Show loading state
+    const btn = document.getElementById('generate-quiz-btn');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Generating...';
+    btn.disabled = true;
+    
+    // For now, redirect to quiz list with filters
+    // Later you can implement actual quiz generation
+    let url = `/quizzes/?category=${categoryId}&difficulty=${difficulty}`;
+    if (selectedSubcategoryId !== 'all') {
+        url += `&subcategory=${selectedSubcategoryId}`;
+    }
+    
+    // Redirect after a short delay to show loading state
+    setTimeout(() => {
+        window.location.href = url;
+    }, 1500);
+}
+
+// Update selection info when settings change
+document.getElementById('num-questions').addEventListener('change', function() {
+    if (selectedSubcategoryId) {
+        updateSelectionInfo();
+    }
+});
+
+document.getElementById('difficulty').addEventListener('change', function() {
+    if (selectedSubcategoryId) {
+        updateSelectionInfo();
+    }
+});
+</script>
+{% endblock %}

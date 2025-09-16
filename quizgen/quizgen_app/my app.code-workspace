@@ -1,0 +1,11 @@
+{
+	"folders": [
+		{
+			"name": "my app",
+			"path": "../.."
+		}
+	],
+	"settings": {
+		"python-envs.pythonProjects": []
+	}
+}

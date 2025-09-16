@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Login{% endblock  %}
+
+
+{% block main %}
+    <div class="history-container">
+        <div class="history-header">
+            <h2>Quiz History</h2>
+            <p class="subtitle">Track your progress and review past performance</p>
+        </div>
+        
+        <div class="history-stats">
+            <div class="stat-card">
+                <h3>Total Quizzes</h3>
+                <div class="stat-number" id="totalHistoryQuizzes">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Average Score</h3>
+                <div class="stat-number" id="historyAverageScore">0%</div>
+            </div>
+            <div class="stat-card">
+                <h3>Best Category</h3>
+                <div class="stat-number" id="bestCategory">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>Improvement</h3>
+                <div class="stat-number" id="improvement">0%</div>
+            </div>
+        </div>
+        
+        <div class="history-filters">
+            <div class="filter-group">
+                <label for="categoryFilter">Filter by Category:</label>
+                <select id="categoryFilter" onchange="filterHistory()">
+                    <option value="all">All Categories</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="sortBy">Sort by:</label>
+                <select id="sortBy" onchange="sortHistory()">
+                    <option value="date-desc">Date (Newest First)</option>
+                    <option value="date-asc">Date (Oldest First)</option>
+                    <option value="score-desc">Score (Highest First)</option>
+                    <option value="score-asc">Score (Lowest First)</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="history-content">
+            <div class="history-list" id="historyList">
+                <!-- History items will be populated by JavaScript -->
+            </div>
+            
+            <div class="no-history" id="noHistory" style="display: none;">
+                <div class="no-history-content">
+                    <h3>No Quiz History Yet</h3>
+                    <p>You haven't taken any quizzes yet. Start your learning journey!</p>
+                    <a href="{% url "categories" %}" class="btn btn-primary">Take Your First Quiz</a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock  %}

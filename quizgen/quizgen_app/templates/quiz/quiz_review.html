@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Quiz Review - QuizGen</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .correct { border: 2px solid green; background: #d4edda; }
+        .wrong { border: 2px solid red; background: #f8d7da; }
+    </style>
+</head>
+<body class="container mt-4">
+    <h2>Quiz Review</h2>
+    {% for q in quiz %}
+        <div class="card mb-3">
+            <div class="card-body">
+                <h5>Q{{ forloop.counter }}: {{ q.text }}</h5>
+                <ul class="list-group">
+                    <li class="list-group-item {% if q.correct_answer == 'A' %}correct{% elif q.user_answer == 'A' %}wrong{% endif %}">
+                        A) {{ q.option1 }}
+                    </li>
+                    <li class="list-group-item {% if q.correct_answer == 'B' %}correct{% elif q.user_answer == 'B' %}wrong{% endif %}">
+                        B) {{ q.option2 }}
+                    </li>
+                    <li class="list-group-item {% if q.correct_answer == 'C' %}correct{% elif q.user_answer == 'C' %}wrong{% endif %}">
+                        C) {{ q.option3 }}
+                    </li>
+                    <li class="list-group-item {% if q.correct_answer == 'D' %}correct{% elif q.user_answer == 'D' %}wrong{% endif %}">
+                        D) {{ q.option4 }}
+                    </li>
+                </ul>
+                <p class="mt-2"><strong>Your Answer:</strong> {{ q.user_answer }} | <strong>Correct Answer:</strong> {{ q.correct_answer }}</p>
+            </div>
+        </div>
+    {% endfor %}
+</body>
+</html>

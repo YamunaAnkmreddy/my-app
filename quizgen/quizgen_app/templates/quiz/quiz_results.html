@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="max-w-4xl mx-auto mt-6 p-6">
+    <!-- Results Header -->
+    <div class="bg-white shadow-lg rounded-xl p-6 mb-6">
+        <div class="text-center">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">Quiz Results</h1>
+            <h2 class="text-xl text-gray-600 mb-4">{{ results.quiz_title }}</h2>
+            
+            <!-- Score Display -->
+            <div class="bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg p-6 mb-6">
+                <div class="text-6xl font-bold mb-2">{{ results.score_percentage }}%</div>
+                <div class="text-lg">
+                    {{ results.correct_answers }} out of {{ results.total_questions }} correct
+                </div>
+                {% if results.time_taken %}
+                <div class="text-sm mt-2 opacity-90">
+                    Time taken: {{ results.time_taken }} seconds
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Performance Badge -->
+            <div class="mb-4">
+                {% if results.score_percentage >= 90 %}
+                    <span class="bg-green-100 text-green-800 text-lg font-semibold px-4 py-2 rounded-full">
+                        🏆 Excellent!
+                    </span>
+                {% elif results.score_percentage >= 80 %}
+                    <span class="bg-blue-100 text-blue-800 text-lg font-semibold px-4 py-2 rounded-full">
+                        🌟 Great Job!
+                    </span>
+                {% elif results.score_percentage >= 70 %}
+                    <span class="bg-yellow-100 text-yellow-800 text-lg font-semibold px-4 py-2 rounded-full">
+                        👍 Good Work!
+                    </span>
+                {% elif results.score_percentage >= 60 %}
+                    <span class="bg-orange-100 text-orange-800 text-lg font-semibold px-4 py-2 rounded-full">
+                        📚 Keep Studying!
+                    </span>
+                {% else %}
+                    <span class="bg-red-100 text-red-800 text-lg font-semibold px-4 py-2 rounded-full">
+                        💪 Try Again!
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Question Review -->
+    <div class="bg-white shadow-lg rounded-xl p-6">
+        <h3 class="text-2xl font-bold text-gray-800 mb-6">Question Review</h3>
+        
+        {% for question_id, result in results.question_results.items %}
+        <div class="border-b border-gray-200 pb-4 mb-4 {% if forloop.last %}border-b-0 pb-0 mb-0{% endif %}">
+            <!-- Question -->
+            <div class="mb-3">
+                <h4 class="font-semibold text-gray-800 mb-2">
+                    Question {{ forloop.counter }}
+                </h4>
+                <p class="text-gray-700">{{ result.question_text }}</p>
+            </div>
+            
+            <!-- Options and Answers -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-3">
+                {% for option_key, option_text in result.options.items %}
+                <div class="p-2 rounded-lg border 
+                    {% if option_key == result.correct_answer %}
+                        bg-green-100 border-green-300
+                    {% elif option_key == result.selected_option and not result.is_correct %}
+                        bg-red-100 border-red-300
+                    {% else %}
+                        bg-gray-50 border-gray-200
+                    {% endif %}">
+                    
+                    <span class="font-medium">{{ option_key }})</span> {{ option_text }}
+                    
+                    {% if option_key == result.correct_answer %}
+                        <span class="float-right text-green-600">✓ Correct</span>
+                    {% elif option_key == result.selected_option and not result.is_correct %}
+                        <span class="float-right text-red-600">✗ Your Answer</span>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Result Status -->
+            <div class="text-sm">
+                {% if result.is_correct %}
+                    <span class="text-green-600 font-medium">✅ Correct!</span>
+                {% else %}
+                    <span class="text-red-600 font-medium">❌ Incorrect</span>
+                    <span class="text-gray-600">
+                        - You selected {{ result.selected_option }}, correct answer is {{ result.correct_answer }}
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="flex justify-center space-x-4 mt-8">
+        <a href="{% url 'quiz_list' %}" 
+           class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-lg shadow-md transition-colors">
+            Take Another Quiz
+        </a>
+        {% if results.quiz_id %}
+        <a href="{% url 'take_quiz' results.quiz_id %}" 
+           class="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-3 rounded-lg shadow-md transition-colors">
+            Retake This Quiz
+        </a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

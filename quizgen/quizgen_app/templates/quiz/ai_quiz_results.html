@@ -1,0 +1,370 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Quiz Results - {{ quiz_title|default:"AI Generated Quiz" }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto p-6 max-w-6xl">
+    <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+        <!-- Header Section -->
+        <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-8">
+            <div class="text-center">
+                <div class="text-6xl mb-4">
+                    {% if percentage >= 80 %}🏆
+                    {% elif percentage >= 60 %}🎉
+                    {% else %}📚
+                    {% endif %}
+                </div>
+                <h1 class="text-4xl font-bold mb-2">Quiz Complete!</h1>
+                <h2 class="text-2xl font-semibold opacity-90">{{ quiz_title|default:"AI Generated Quiz" }}</h2>
+                <p class="text-lg opacity-80 mt-2">{{ quiz_category|default:"General Knowledge" }} • {{ quiz_difficulty|default:"Medium" }} Level</p>
+            </div>
+        </div>
+
+        <!-- Results Summary Cards -->
+        <div class="p-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <!-- Score Card -->
+                <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-xl border border-blue-200 text-center">
+                    <div class="text-3xl font-bold text-blue-600 mb-2">{{ score }}/{{ total_questions }}</div>
+                    <div class="text-blue-800 font-semibold">Final Score</div>
+                </div>
+
+                <!-- Percentage Card -->
+                <div class="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-xl border border-green-200 text-center">
+                    <div class="text-3xl font-bold text-green-600 mb-2">{{ percentage }}%</div>
+                    <div class="text-green-800 font-semibold">Percentage</div>
+                </div>
+
+                <!-- Grade Card -->
+                <div class="bg-gradient-to-br from-purple-50 to-purple-100 p-6 rounded-xl border border-purple-200 text-center">
+                    <div class="text-3xl font-bold text-purple-600 mb-2">
+                        {% if percentage >= 90 %}A+
+                        {% elif percentage >= 80 %}A
+                        {% elif percentage >= 70 %}B
+                        {% elif percentage >= 60 %}C
+                        {% elif percentage >= 50 %}D
+                        {% else %}F
+                        {% endif %}
+                    </div>
+                    <div class="text-purple-800 font-semibold">Grade</div>
+                </div>
+
+                <!-- Status Card -->
+                <div class="bg-gradient-to-br from-{% if percentage >= 60 %}green{% else %}red{% endif %}-50 to-{% if percentage >= 60 %}green{% else %}red{% endif %}-100 p-6 rounded-xl border border-{% if percentage >= 60 %}green{% else %}red{% endif %}-200 text-center">
+                    <div class="text-3xl font-bold text-{% if percentage >= 60 %}green{% else %}red{% endif %}-600 mb-2">
+                        {% if percentage >= 60 %}✅{% else %}❌{% endif %}
+                    </div>
+                    <div class="text-{% if percentage >= 60 %}green{% else %}red{% endif %}-800 font-semibold">
+                        {% if percentage >= 60 %}Passed{% else %}Failed{% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Performance Analysis -->
+            <div class="mb-8 p-6 bg-gray-50 rounded-xl border">
+                <h3 class="text-2xl font-bold text-gray-800 mb-4 text-center">Performance Analysis</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="text-center">
+                        <div class="text-4xl mb-2">{{ correct_answers }}</div>
+                        <div class="text-green-600 font-semibold">Correct Answers</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-4xl mb-2">{{ incorrect_answers }}</div>
+                        <div class="text-red-600 font-semibold">Incorrect Answers</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-4xl mb-2">{{ time_taken|default:"--:--" }}</div>
+                        <div class="text-blue-600 font-semibold">Time Taken</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Results -->
+            <div class="mb-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-2xl font-bold text-gray-800">Detailed Results</h3>
+                    <div class="flex space-x-2">
+                        <button onclick="showAll()" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-200">
+                            Show All
+                        </button>
+                        <button onclick="showCorrect()" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors duration-200">
+                            Correct Only
+                        </button>
+                        <button onclick="showIncorrect()" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors duration-200">
+                            Incorrect Only
+                        </button>
+                    </div>
+                </div>
+
+                <div class="space-y-6" id="questions-container">
+                    {% for result in question_results %}
+                        <div class="question-result border-l-4 {% if result.is_correct %}border-green-500 bg-green-50{% else %}border-red-500 bg-red-50{% endif %} p-6 rounded-r-lg" 
+                             data-correct="{{ result.is_correct|yesno:'true,false' }}">
+                            
+                            <!-- Question Header -->
+                            <div class="flex items-start justify-between mb-4">
+                                <div class="flex items-center">
+                                    <span class="bg-gray-600 text-white rounded-full px-3 py-1 text-sm font-bold mr-4">
+                                        {{ forloop.counter }}
+                                    </span>
+                                    <h4 class="text-lg font-semibold text-gray-800 flex-1">
+                                        {{ result.question_text }}
+                                    </h4>
+                                </div>
+                                <div class="ml-4">
+                                    <span class="text-3xl">
+                                        {% if result.is_correct %}✅{% else %}❌{% endif %}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Options and Answers -->
+                            <div class="ml-12 space-y-3">
+                                {% for option in result.options %}
+                                    {% if option %}
+                                        <div class="flex items-center p-3 rounded-lg border-2
+                                            {% if option == result.correct_answer %}border-green-500 bg-green-100
+                                            {% elif option == result.user_answer and option != result.correct_answer %}border-red-500 bg-red-100
+                                            {% else %}border-gray-200 bg-white
+                                            {% endif %}">
+                                            
+                                            <div class="flex items-center mr-4">
+                                                {% if option == result.user_answer %}
+                                                    <div class="w-4 h-4 bg-blue-500 rounded-full border-2 border-blue-600"></div>
+                                                {% else %}
+                                                    <div class="w-4 h-4 bg-white rounded-full border-2 border-gray-300"></div>
+                                                {% endif %}
+                                            </div>
+                                            
+                                            <span class="flex-1 text-gray-800">{{ option }}</span>
+                                            
+                                            <div class="flex items-center space-x-2">
+                                                {% if option == result.correct_answer %}
+                                                    <span class="bg-green-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
+                                                        Correct
+                                                    </span>
+                                                {% endif %}
+                                                {% if option == result.user_answer and option != result.correct_answer %}
+                                                    <span class="bg-red-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
+                                                        Your Answer
+                                                    </span>
+                                                {% elif option == result.user_answer and option == result.correct_answer %}
+                                                    <span class="bg-blue-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
+                                                        Your Answer
+                                                    </span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                {% endfor %}
+
+                                <!-- No Answer Given -->
+                                {% if not result.user_answer %}
+                                    <div class="p-3 bg-gray-100 border-2 border-gray-300 rounded-lg">
+                                        <span class="text-gray-600 italic">No answer provided</span>
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Explanation -->
+                            {% if result.explanation %}
+                                <div class="ml-12 mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                                    <div class="flex items-start">
+                                        <div class="text-blue-500 mr-3 mt-1">💡</div>
+                                        <div>
+                                            <h5 class="font-semibold text-blue-800 mb-2">Explanation:</h5>
+                                            <p class="text-blue-700">{{ result.explanation }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex justify-center space-x-4 pt-6 border-t border-gray-200">
+                <button onclick="window.print()" 
+                        class="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-6 py-3 rounded-lg transition-colors duration-200 shadow-lg">
+                    <span class="mr-2">🖨️</span>
+                    Print Results
+                </button>
+                
+                <a href="{% url 'quiz_list' %}" 
+                   class="bg-purple-500 hover:bg-purple-600 text-white font-semibold px-6 py-3 rounded-lg transition-colors duration-200 shadow-lg inline-block">
+                    <span class="mr-2">🤖</span>
+                    Take Another AI Quiz
+                </a>
+                
+                <a href="{% url 'quiz_list' %}" 
+                   class="bg-green-500 hover:bg-green-600 text-white font-semibold px-6 py-3 rounded-lg transition-colors duration-200 shadow-lg inline-block">
+                    <span class="mr-2">📋</span>
+                    Browse All Quizzes
+                </a>
+                
+                <a href="{% url 'home' %}" 
+                   class="bg-gray-500 hover:bg-gray-600 text-white font-semibold px-6 py-3 rounded-lg transition-colors duration-200 shadow-lg inline-block">
+                    <span class="mr-2">🏠</span>
+                    Back to Home
+                </a>
+            </div>
+
+            <!-- Performance Tips -->
+            <div class="mt-8 p-6 bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-xl">
+                <h3 class="text-xl font-bold text-yellow-800 mb-4 flex items-center">
+                    <span class="mr-2">💡</span>
+                    Performance Tips
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {% if percentage >= 80 %}
+                        <div class="text-yellow-700">
+                            <strong>Excellent work!</strong> You've demonstrated strong knowledge in this area.
+                        </div>
+                        <div class="text-yellow-700">
+                            Consider challenging yourself with harder difficulty levels or different topics.
+                        </div>
+                    {% elif percentage >= 60 %}
+                        <div class="text-yellow-700">
+                            <strong>Good job!</strong> You have a solid foundation but there's room for improvement.
+                        </div>
+                        <div class="text-yellow-700">
+                            Review the explanations for incorrect answers to strengthen your knowledge.
+                        </div>
+                    {% else %}
+                        <div class="text-yellow-700">
+                            <strong>Keep learning!</strong> This topic may need more study and practice.
+                        </div>
+                        <div class="text-yellow-700">
+                            Focus on the areas where you got questions wrong and try taking the quiz again.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Filter functionality for detailed results
+function showAll() {
+    const questions = document.querySelectorAll('.question-result');
+    questions.forEach(q => q.style.display = 'block');
+    updateFilterButtons('all');
+}
+
+function showCorrect() {
+    const questions = document.querySelectorAll('.question-result');
+    questions.forEach(q => {
+        if (q.dataset.correct === 'true') {
+            q.style.display = 'block';
+        } else {
+            q.style.display = 'none';
+        }
+    });
+    updateFilterButtons('correct');
+}
+
+function showIncorrect() {
+    const questions = document.querySelectorAll('.question-result');
+    questions.forEach(q => {
+        if (q.dataset.correct === 'false') {
+            q.style.display = 'block';
+        } else {
+            q.style.display = 'none';
+        }
+    });
+    updateFilterButtons('incorrect');
+}
+
+function updateFilterButtons(active) {
+    const buttons = document.querySelectorAll('[onclick^="show"]');
+    buttons.forEach(btn => {
+        btn.classList.remove('bg-blue-600', 'bg-green-600', 'bg-red-600');
+        btn.classList.add('bg-blue-500', 'hover:bg-blue-600');
+    });
+    
+    if (active === 'correct') {
+        document.querySelector('[onclick="showCorrect()"]').classList.remove('bg-blue-500', 'hover:bg-blue-600');
+        document.querySelector('[onclick="showCorrect()"]').classList.add('bg-green-600');
+    } else if (active === 'incorrect') {
+        document.querySelector('[onclick="showIncorrect()"]').classList.remove('bg-blue-500', 'hover:bg-blue-600');
+        document.querySelector('[onclick="showIncorrect()"]').classList.add('bg-red-600');
+    } else {
+        document.querySelector('[onclick="showAll()"]').classList.remove('bg-blue-500', 'hover:bg-blue-600');
+        document.querySelector('[onclick="showAll()"]').classList.add('bg-blue-600');
+    }
+}
+
+// Initialize with all questions shown
+document.addEventListener('DOMContentLoaded', () => {
+    updateFilterButtons('all');
+    
+    // Add animation to result cards
+    const cards = document.querySelectorAll('.question-result');
+    cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+            card.style.transition = 'all 0.5s ease-out';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+});
+
+// Print styles
+window.addEventListener('beforeprint', () => {
+    // Show all questions when printing
+    showAll();
+});
+</script>
+
+<style>
+/* Print styles */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    
+    .question-result {
+        page-break-inside: avoid;
+        margin-bottom: 1rem;
+    }
+    
+    body {
+        font-size: 12px;
+    }
+    
+    h1, h2, h3 {
+        color: #000 !important;
+    }
+}
+
+/* Animation styles */
+.question-result {
+    transition: all 0.3s ease-out;
+}
+
+.question-result:hover {
+    transform: translateX(5px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Enhanced button hover effects */
+button:hover, a:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Gradient text effect */
+.gradient-text {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+</style>
+
+{% endblock %}

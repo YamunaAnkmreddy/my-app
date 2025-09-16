@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Results - QuizGen</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        .correct-answer {
+            background: #28a745 !important;
+            border-color: #28a745 !important;
+            color: white !important;
+        }
+        .wrong-answer {
+            background: #dc3545 !important;
+            border-color: #dc3545 !important;
+            color: white !important;
+        }
+        .result-badge {
+            font-size: 2rem;
+            padding: 20px 40px;
+            border-radius: 50px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <div class="row mb-4">
+            <div class="col-12 text-center">
+                <h2 class="text-white mb-4">
+                    <i class="fas fa-chart-line me-2"></i>Quiz Results
+                </h2>
+            </div>
+        </div>
+
+        <!-- Score Summary -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-star fa-3x text-warning mb-3"></i>
+                        <h4>{{ score }}/{{ total_marks }}</h4>
+                        <p class="text-muted">Final Score</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-percentage fa-3x text-info mb-3"></i>
+                        <h4>{{ percentage|floatformat:1 }}%</h4>
+                        <p class="text-muted">Percentage</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                        <h4>{{ correct_answers }}</h4>
+                        <p class="text-muted">Correct</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-times-circle fa-3x text-danger mb-3"></i>
+                        <h4>{{ wrong_answers }}</h4>
+                        <p class="text-muted">Wrong</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Badge -->
+        <div class="row mb-4">
+            <div class="col-12 text-center">
+                {% if passed %}
+                    <div class="badge bg-success result-badge">
+                        🎉 PASSED!
+                    </div>
+                {% else %}
+                    <div class="badge bg-danger result-badge">
+                        😔 FAILED
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Question Review -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-eye me-2"></i>Review Answers</h5>
+                    </div>
+                    <div class="card-body">
+                        {% for question in questions %}
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h6 class="card-title">Question {{ forloop.counter }}</h6>
+                                <p class="card-text">{{ question.text }}</p>
+                                <div class="options">
+                                    {% for option in question.options %}
+                                    <button class="btn w-100 text-start mb-2 disabled
+                                        {% if forloop.counter0 == question.correct_answer %}
+                                            correct-answer
+                                        {% elif forloop.counter0 == question.user_answer and question.user_answer != question.correct_answer %}
+                                            wrong-answer
+                                        {% else %}
+                                            btn-outline-secondary
+                                        {% endif %}">
+                                        
+                                        {% if forloop.counter0 == question.correct_answer %}
+                                            <i class="fas fa-check me-2"></i>
+                                        {% elif forloop.counter0 == question.user_answer and question.user_answer != question.correct_answer %}
+                                            <i class="fas fa-times me-2"></i>
+                                        {% endif %}
+                                        
+                                        {{ option.letter }}. {{ option.text }}
+                                    </button>
+                                    {% endfor %}
+                                </div>
+                                <div class="mt-2">
+                                    {% if question.user_answer == question.correct_answer %}
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-check me-1"></i>Correct
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-danger">
+                                            <i class="fas fa-times me-1"></i>Wrong
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-12 text-center">
+                <a href="{% url 'quiz_list' %}" class="btn btn-primary me-3">
+                    <i class="fas fa-redo me-2"></i>Take Another Quiz
+                </a>
+                <a href="{% url 'dashboard' %}" class="btn btn-outline-light">
+                    <i class="fas fa-home me-2"></i>Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

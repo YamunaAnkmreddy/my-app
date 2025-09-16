@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Take Quiz - QuizGen</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        .quiz-timer {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            padding: 15px;
+            border-radius: 15px;
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 107, 107, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 107, 107, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 107, 107, 0); }
+        }
+        .question-card {
+            margin-bottom: 30px;
+            border-left: 4px solid #667eea;
+        }
+        .option-btn {
+            width: 100%;
+            text-align: left;
+            margin-bottom: 10px;
+            border: 2px solid #e9ecef;
+            background: white;
+            transition: all 0.3s ease;
+        }
+        .option-btn:hover {
+            background: #f8f9fa;
+            border-color: #667eea;
+        }
+        .option-btn.selected {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        .progress-bar {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h3 class="text-white">
+                    <i class="fas fa-question-circle me-2"></i>{{ quiz.title }}
+                </h3>
+                <div class="progress" style="height: 10px;">
+                    <div class="progress-bar" id="quiz-progress" style="width: 0%"></div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="quiz-timer" id="timer">
+                    <i class="fas fa-clock me-2"></i>
+                    <span id="time-remaining">{{ time_limit }}:00</span>
+                </div>
+            </div>
+        </div>
+
+        <form id="quiz-form" method="post">
+            {% csrf_token %}
+            <div id="questions-container">
+                {% for question in questions %}
+                <div class="card question-card">
+                    <div class="card-body">
+                        <h5 class="card-title">Question {{ forloop.counter }}</h5>
+                        <p class="card-text">{{ question.text }}</p>
+                        <div class="options">
+                            {% for option in question.options %}
+                            <button type="button" class="btn option-btn" 
+                                    data-question="{{ question.id }}" 
+                                    data-option="{{ forloop.counter0 }}">
+                                {{ option.letter }}. {{ option.text }}
+                            </button>
+                            {% endfor %}
+                        </div>
+                        <input type="hidden" name="answer_{{ question.id }}" id="answer_{{ question.id }}">
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="row">
+                <div class="col-12 text-center">
+                    <button type="submit" class="btn btn-success btn-lg" id="submit-quiz">
+                        <i class="fas fa-paper-plane me-2"></i>Submit Quiz
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let timeRemaining = {{ time_limit }} * 60; // Convert minutes to seconds
+        let userAnswers = {};
+        let totalQuestions = {{ questions|length }};
+
+        // Initialize timer
+        const timer = setInterval(() => {
+            const minutes = Math.floor(timeRemaining / 60);
+            const seconds = timeRemaining % 60;
+            
+            document.getElementById('time-remaining').textContent = 
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            if (timeRemaining <= 0) {
+                clearInterval(timer);
+                document.getElementById('quiz-form').submit();
+            }
+            
+            timeRemaining--;
+        }, 1000);
+
+        // Option selection
+        document.querySelectorAll('.option-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const questionId = this.dataset.question;
+                const optionIndex = this.dataset.option;
+                
+                // Remove previous selection for this question
+                document.querySelectorAll(`[data-question="${questionId}"]`).forEach(b => b.classList.remove('selected'));
+                
+                // Add selection to current option
+                this.classList.add('selected');
+                
+                // Store answer
+                userAnswers[questionId] = optionIndex;
+                document.getElementById(`answer_${questionId}`).value = optionIndex;
+                
+                // Update progress
+                updateProgress();
+            });
+        });
+
+        function updateProgress() {
+            const answered = Object.keys(userAnswers).length;
+            const percentage = (answered / totalQuestions) * 100;
+            document.getElementById('quiz-progress').style.width = percentage + '%';
+        }
+
+        // Form submission
+        document.getElementById('quiz-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            clearInterval(timer);
+            
+            // Submit the form
+            this.submit();
+        });
+    </script>
+</body>
+</html>
